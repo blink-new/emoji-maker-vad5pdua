@@ -1,94 +1,156 @@
 
-import { useRef, useMemo } from 'react'
-import { Mesh } from 'three'
+import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { EmojiFeatures } from '../types/emoji'
+import * as THREE from 'three'
 
 interface EmojiMeshProps {
   features: EmojiFeatures
 }
 
 export function EmojiMesh({ features }: EmojiMeshProps) {
-  const meshRef = useRef<Mesh>(null)
-  
-  const eyeGeometry = useMemo(() => {
-    switch (features.eyeStyle) {
-      case 'star':
-        return <sphereGeometry args={[0.2, 32, 32]} />
-      case 'heart':
-        return <sphereGeometry args={[0.15, 32, 32]} />
-      default:
-        return <sphereGeometry args={[0.1, 32, 32]} />
-    }
-  }, [features.eyeStyle])
+  const groupRef = useRef<THREE.Group>(null)
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null)
 
   useFrame((state) => {
-    if (!meshRef.current) return
-    meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.1
-    if (features.bouncing) {
-      meshRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 2) * 0.1
+    if (groupRef.current && features.bouncing) {
+      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.1
     }
   })
 
+  const getEyeGeometry = (style: EmojiFeatures['eyeStyle']) => {
+    switch (style) {
+      case 'star':
+        return (
+          <mesh position={[0, 0, 0.5]} scale={0.15}>
+            <starGeometry args={[0.5, 1, 5]} />
+            <meshStandardMaterial color="black" />
+          </mesh>
+        )
+      case 'heart':
+        // Approximate heart shape with multiple shapes
+        return (
+          <group position={[0, 0, 0.5]} scale={0.15}>
+            <mesh rotation={[0, 0, Math.PI / 4]}>
+              <boxGeometry args={[0.5, 0.5, 0.1]} />
+              <meshStandardMaterial color="black" />
+            </mesh>
+            <mesh rotation={[0, 0, -Math.PI / 4]} position={[0.35, 0, 0]}>
+              <boxGeometry args={[0.5, 0.5, 0.1]} />
+              <meshStandardMaterial color="black" />
+            </mesh>
+          </group>
+        )
+      case 'wink':
+        return (
+          <group position={[0, 0, 0.5]}>
+            <mesh scale={0.1}>
+              <ringGeometry args={[0.3, 0.5, 32]} />
+              <meshStandardMaterial color="black" side={THREE.DoubleSide} />
+            </mesh>
+            <mesh position={[0, 0, 0.01]} scale={0.05}>
+              <circleGeometry args={[1, 32]} />
+              <meshStandardMaterial color="black" />
+            </mesh>
+          </group>
+        )
+      case 'closed':
+        return (
+          <mesh position={[0, 0, 0.5]} rotation={[0, 0, Math.PI / 8]} scale={[0.2, 0.05, 1]}>
+            <boxGeometry />
+            <meshStandardMaterial color="black" />
+          </mesh>
+        )
+      case 'surprised':
+        return (
+          <group position={[0, 0, 0.5]}>
+            <mesh scale={0.15}>
+              <ringGeometry args={[0.3, 0.5, 32]} />
+              <meshStandardMaterial color="black" side={THREE.DoubleSide} />
+            </mesh>
+            <mesh position={[0, 0, 0.01]} scale={0.1}>
+              <circleGeometry args={[1, 32]} />
+              <meshStandardMaterial color="black" />
+            </mesh>
+          </group>
+        )
+      default: // normal
+        return (
+          <mesh position={[0, 0, 0.5]} scale={0.1}>
+            <circleGeometry args={[1, 32]} />
+            <meshStandardMaterial color="black" />
+          </mesh>
+        )
+    }
+  }
+
   return (
-    <group>
-      {/* Base sphere */}
-      <mesh ref={meshRef}>
+    <group ref={groupRef}>
+      {/* Main emoji sphere */}
+      <mesh castShadow receiveShadow>
         <sphereGeometry args={[1, 32, 32]} />
-        <meshStandardMaterial 
-          color={features.color} 
+        <meshStandardMaterial
+          ref={materialRef}
+          color={features.color}
           metalness={features.metallic ? 0.8 : 0}
-          roughness={features.metallic ? 0.2 : 0.8}
+          roughness={features.metallic ? 0.2 : 0.4}
         />
       </mesh>
 
-      {/* Eyes */}
-      <group position-y={0.2}>
-        {/* Left eye */}
-        <mesh position={[-0.3, 0, 0.85]}>
-          {eyeGeometry}
-          <meshStandardMaterial color="black" />
-        </mesh>
-        {/* Right eye */}
-        <mesh position={[0.3, 0, 0.85]}>
-          {eyeGeometry}
-          <meshStandardMaterial color="black" />
-        </mesh>
+      {/* Left eye */}
+      <group position={[-0.3, 0.2, 0]}>
+        {getEyeGeometry(features.eyeStyle)}
+      </group>
+
+      {/* Right eye */}
+      <group position={[0.3, 0.2, 0]}>
+        {features.eyeStyle === 'wink' ? getEyeGeometry('closed') : getEyeGeometry(features.eyeStyle)}
       </group>
 
       {/* Mouth */}
-      <mesh position={[0, -0.1, 0.85]} rotation-x={features.mouthStyle === 'sad' ? Math.PI : 0}>
-        <torusGeometry args={[0.3, 0.05, 16, 32, Math.PI]} />
-        <meshStandardMaterial color="black" />
-      </mesh>
+      <group position={[0, -0.1, 0]}>
+        {features.mouthStyle === 'happy' ? (
+          <mesh position={[0, 0, 0.5]} scale={[0.5, 0.5, 0.1]} rotation={[0, 0, Math.PI]}>
+            <circleGeometry args={[0.5, 32, 0, Math.PI]} />
+            <meshStandardMaterial color="black" side={THREE.DoubleSide} />
+          </mesh>
+        ) : (
+          <mesh position={[0, -0.2, 0.5]} scale={[0.5, 0.5, 0.1]}>
+            <circleGeometry args={[0.5, 32, 0, Math.PI]} />
+            <meshStandardMaterial color="black" side={THREE.DoubleSide} />
+          </mesh>
+        )}
+      </group>
 
       {/* Accessories */}
-      {features.accessories.map((accessory, index) => (
-        <group key={index} position-y={0.8}>
-          {accessory === 'hat' && (
-            <mesh rotation-x={-0.5}>
-              <coneGeometry args={[0.5, 0.5, 32]} />
-              <meshStandardMaterial color={features.accessoryColor} />
-            </mesh>
-          )}
-          {accessory === 'glasses' && (
-            <group position-z={0.9}>
-              <mesh position={[-0.3, 0, 0]}>
-                <torusGeometry args={[0.15, 0.02, 16, 32]} />
-                <meshStandardMaterial color={features.accessoryColor} />
-              </mesh>
-              <mesh position={[0.3, 0, 0]}>
-                <torusGeometry args={[0.15, 0.02, 16, 32]} />
-                <meshStandardMaterial color={features.accessoryColor} />
-              </mesh>
-              <mesh position={[0, 0, 0]}>
-                <boxGeometry args={[0.3, 0.02, 0.02]} />
-                <meshStandardMaterial color={features.accessoryColor} />
-              </mesh>
-            </group>
-          )}
+      {features.accessories.includes('hat') && (
+        <group position={[0, 1.1, 0]}>
+          <mesh rotation={[0.2, 0, 0]}>
+            <coneGeometry args={[0.7, 1, 32]} />
+            <meshStandardMaterial color={features.accessoryColor} />
+          </mesh>
         </group>
-      ))}
+      )}
+
+      {features.accessories.includes('glasses') && (
+        <group position={[0, 0.2, 0.6]}>
+          {/* Left lens */}
+          <mesh position={[-0.3, 0, 0]}>
+            <ringGeometry args={[0.15, 0.2, 32]} />
+            <meshStandardMaterial color={features.accessoryColor} side={THREE.DoubleSide} />
+          </mesh>
+          {/* Right lens */}
+          <mesh position={[0.3, 0, 0]}>
+            <ringGeometry args={[0.15, 0.2, 32]} />
+            <meshStandardMaterial color={features.accessoryColor} side={THREE.DoubleSide} />
+          </mesh>
+          {/* Bridge */}
+          <mesh position={[0, 0, 0]} scale={[0.6, 0.05, 0.05]}>
+            <boxGeometry />
+            <meshStandardMaterial color={features.accessoryColor} />
+          </mesh>
+        </group>
+      )}
     </group>
   )
 }

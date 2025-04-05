@@ -9,11 +9,16 @@ import { EmojiCanvas } from './components/EmojiCanvas'
 import { EmojiFeatures } from './types/emoji'
 import { 
   Download, 
-  Smile, 
-  Eye, 
+  Smile,
+  Eye,
   PartyPopper, 
   Glasses as GlassesIcon, 
-  Sparkles 
+  Sparkles,
+  Heart,
+  Star,
+  CircleDot,
+  Moon,
+  AlertCircle
 } from 'lucide-react'
 
 export default function App() {
@@ -105,22 +110,50 @@ export default function App() {
                     <Button
                       variant={features.eyeStyle === 'normal' ? 'default' : 'outline'}
                       onClick={() => setFeatures(prev => ({ ...prev, eyeStyle: 'normal' }))}
+                      className="flex-col h-auto py-4 gap-2"
                     >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Normal
+                      <Eye className="w-6 h-6" />
+                      <span className="text-xs">Normal</span>
                     </Button>
                     <Button
                       variant={features.eyeStyle === 'star' ? 'default' : 'outline'}
                       onClick={() => setFeatures(prev => ({ ...prev, eyeStyle: 'star' }))}
+                      className="flex-col h-auto py-4 gap-2"
                     >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Star
+                      <Star className="w-6 h-6" />
+                      <span className="text-xs">Star</span>
                     </Button>
                     <Button
                       variant={features.eyeStyle === 'heart' ? 'default' : 'outline'}
                       onClick={() => setFeatures(prev => ({ ...prev, eyeStyle: 'heart' }))}
+                      className="flex-col h-auto py-4 gap-2"
                     >
-                      ❤️ Heart
+                      <Heart className="w-6 h-6" />
+                      <span className="text-xs">Heart</span>
+                    </Button>
+                    <Button
+                      variant={features.eyeStyle === 'wink' ? 'default' : 'outline'}
+                      onClick={() => setFeatures(prev => ({ ...prev, eyeStyle: 'wink' }))}
+                      className="flex-col h-auto py-4 gap-2"
+                    >
+                      <CircleDot className="w-6 h-6" />
+                      <span className="text-xs">Wink</span>
+                    </Button>
+                    <Button
+                      variant={features.eyeStyle === 'closed' ? 'default' : 'outline'}
+                      onClick={() => setFeatures(prev => ({ ...prev, eyeStyle: 'closed' }))}
+                      className="flex-col h-auto py-4 gap-2"
+                    >
+                      <Moon className="w-6 h-6" />
+                      <span className="text-xs">Closed</span>
+                    </Button>
+                    <Button
+                      variant={features.eyeStyle === 'surprised' ? 'default' : 'outline'}
+                      onClick={() => setFeatures(prev => ({ ...prev, eyeStyle: 'surprised' }))}
+                      className="flex-col h-auto py-4 gap-2"
+                    >
+                      <AlertCircle className="w-6 h-6" />
+                      <span className="text-xs">Surprised</span>
                     </Button>
                   </div>
                 </div>
