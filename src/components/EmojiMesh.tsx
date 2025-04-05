@@ -1,5 +1,5 @@
 
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { EmojiFeatures } from '../types/emoji'
 import * as THREE from 'three'
@@ -12,6 +12,53 @@ export function EmojiMesh({ features }: EmojiMeshProps) {
   const groupRef = useRef<THREE.Group>(null)
   const materialRef = useRef<THREE.MeshStandardMaterial>(null)
 
+  // Create star shape
+  const starGeometry = useMemo(() => {
+    const shape = new THREE.Shape()
+    const points = 5
+    const outerRadius = 1
+    const innerRadius = 0.5
+    
+    for (let i = 0; i < points * 2; i++) {
+      const radius = i % 2 === 0 ? outerRadius : innerRadius
+      const angle = (i / (points * 2)) * Math.PI * 2
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      
+      if (i === 0) {
+        shape.moveTo(x, y)
+      } else {
+        shape.lineTo(x, y)
+      }
+    }
+    shape.closePath()
+
+    const extrudeSettings = {
+      steps: 1,
+      depth: 0.1,
+      bevelEnabled: false
+    }
+
+    return new THREE.ExtrudeGeometry(shape, extrudeSettings)
+  }, [])
+
+  // Create heart shape
+  const heartGeometry = useMemo(() => {
+    const shape = new THREE.Shape()
+    
+    shape.moveTo(0, 0)
+    shape.bezierCurveTo(-0.5, 0.5, -1, 0.8, 0, 1.5)
+    shape.bezierCurveTo(1, 0.8, 0.5, 0.5, 0, 0)
+    
+    const extrudeSettings = {
+      steps: 1,
+      depth: 0.1,
+      bevelEnabled: false
+    }
+
+    return new THREE.ExtrudeGeometry(shape, extrudeSettings)
+  }, [])
+
   useFrame((state) => {
     if (groupRef.current && features.bouncing) {
       groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.1
@@ -22,24 +69,17 @@ export function EmojiMesh({ features }: EmojiMeshProps) {
     switch (style) {
       case 'star':
         return (
-          <mesh position={[0, 0, 0.5]} scale={0.15}>
-            <starGeometry args={[0.5, 1, 5]} />
+          <mesh position={[0, 0, 0.5]} scale={0.15} rotation={[0, 0, Math.PI / 2]}>
+            <primitive object={starGeometry} />
             <meshStandardMaterial color="black" />
           </mesh>
         )
       case 'heart':
-        // Approximate heart shape with multiple shapes
         return (
-          <group position={[0, 0, 0.5]} scale={0.15}>
-            <mesh rotation={[0, 0, Math.PI / 4]}>
-              <boxGeometry args={[0.5, 0.5, 0.1]} />
-              <meshStandardMaterial color="black" />
-            </mesh>
-            <mesh rotation={[0, 0, -Math.PI / 4]} position={[0.35, 0, 0]}>
-              <boxGeometry args={[0.5, 0.5, 0.1]} />
-              <meshStandardMaterial color="black" />
-            </mesh>
-          </group>
+          <mesh position={[0, 0, 0.5]} scale={0.15} rotation={[0, 0, Math.PI]}>
+            <primitive object={heartGeometry} />
+            <meshStandardMaterial color="black" />
+          </mesh>
         )
       case 'wink':
         return (
